@@ -1,0 +1,87 @@
+#!/bin/sh
+# by TUVIMEN <suchora.dominik7@gmail.com>
+# License: GNU GPLv3
+
+by_name=""
+by_time="time"
+by_size="size"
+by_se="seeders"
+by_le="leechers"
+
+SORT="$by_name"
+PAGE=1
+SEARCH=""
+REVERSE=""
+
+while [ $# -gt 0 ]
+do
+  case "$1" in
+    -s|--sort)
+      case "$2" in
+        name) SORT="$by_name";;
+        size) SORT="$by_size";;
+        time) SORT="$by_time";;
+        se) SORT="$by_se";;
+        le) SORT="$by_le";;
+      esac
+      shift 2
+      ;;
+    -h|--help)
+        NAME="$(basename "$0")"
+        printf "%s [OPTION]... [PATTERN]\nSearch for PATTERN in 1337x.\nExample: %s -s size -p 2 'archlinux'\n\n" "$NAME" "$NAME"
+        printf "Options:\n  -s,  --sort TYPE\tsort using TYPE that can be: name, size, time, se, le\n"
+        printf "  -r,  --reverse\tsort in reverse\n"
+        printf "  -p,  --page NUM\tshow page at NUM\n"
+        printf "  -h,  --help\t\tshow help\n"
+        printf "\nMagnet link will be copied via xclip.\n"
+        exit 0
+        ;;
+    -r|--reverse)
+        REVERSE="1"
+        shift
+        ;;
+    -p|--page)
+        PAGE="$2"
+        shift 2
+        ;;
+    *)
+      SEARCH="$1"
+      shift
+      ;;
+  esac
+done
+
+SEARCHP=$(echo "$SEARCH" | tr ' -+/_:;' '.')
+
+t1="$(mktemp)"
+t_time="$(mktemp)"
+t_size="$(mktemp)"
+t_se="$(mktemp)"
+t_le="$(mktemp)"
+t_name="$(mktemp)"
+t_link="$(mktemp)"
+t_uploader="$(mktemp)"
+trap 'rm "$t1" "$t_name" "$t_link" "$t_se" "$t_le" "$t_time" "$t_size" "$t_uploader"' EXIT
+
+if [ -n "$SORT" ]
+then
+    PSORT="search-sort"
+    [ -z "$REVERSE" ] && RSORT="desc" || RSORT="asc"
+else
+    RSORT=""
+    PSORT="search"
+fi
+
+curl -s "https://www.1337xx.to/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
+hgrep 'td +class="coll-1 name"; a +href="/torrent/.*"' "$t1" | sed 's/.*">//; s/<\/a>$//' > "$t_name"
+hgrep 'td +class="coll-1 name"' "$t1" | grep -o '/torrent/.*/">' | sed 's/">$//;s/^/https:\/\/www.1337xx.to/' > "$t_link"
+hgrep 'td +class="coll-2 seeds"' "$t1" | sed 's/.*">//; s/<.*//' > "$t_se"
+hgrep 'td +class="coll-3 leeches"' "$t1" | sed 's/.*">//; s/<.*//' > "$t_le"
+hgrep 'td +class="coll-date"' "$t1" | sed 's/.*">//; s/<.*//' > "$t_time"
+hgrep 'td +class="coll-4 .*"' "$t1" | sed 's/<span.*//; s/.*">//' > "$t_size"
+hgrep 'td +class="coll-5 .*"' "$t1" | sed 's/.*">//; s/<.*//' > "$t_uploader"
+
+paste "$t_name" "$t_time" "$t_size" "$t_se" "$t_le" "$t_uploader" | nl
+printf 'num> '
+read -r NUMBER
+[ "$NUMBER" -gt 0 ] && curl -g -s "$(sed "${NUMBER}q;d" "$t_link")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | xclip -sel clip
