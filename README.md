@@ -1,5 +1,5 @@
-# tpb
-A bash script to search for torrents on 1337x.
+# t1337x
+A shell script to search for torrents on 1337x.
 
 ## Requirements
 
