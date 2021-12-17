@@ -12,6 +12,7 @@ SORT="$by_name"
 PAGE=1
 SEARCH=""
 REVERSE=""
+DOMAIN="https://www.1337xx.to"
 
 while [ $# -gt 0 ]
 do
@@ -31,6 +32,7 @@ do
         printf "%s [OPTION]... [PATTERN]\nSearch for PATTERN in 1337x.\nExample: %s -s size -p 2 'archlinux'\n\n" "$NAME" "$NAME"
         printf "Options:\n  -s,  --sort TYPE\tsort using TYPE that can be: name, size, time, se, le\n"
         printf "  -r,  --reverse\tsort in reverse\n"
+        printf "  -d,  --domain DOMAIN\tset domain to DOMAIN\n"
         printf "  -p,  --page NUM\tshow page at NUM\n"
         printf "  -h,  --help\t\tshow help\n"
         printf "\nMagnet link will be copied via xclip.\n"
@@ -39,6 +41,10 @@ do
     -r|--reverse)
         REVERSE="1"
         shift
+        ;;
+    -d|--domain)
+        DOMAIN="$2"
+        shift 2
         ;;
     -p|--page)
         PAGE="$2"
@@ -72,9 +78,9 @@ else
     PSORT="search"
 fi
 
-curl -s "https://www.1337xx.to/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
+curl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
 hgrep 'a +href="/torrent/.*"' "$t1" -printf "%i\n" > "$t_name"
-hgrep 'a +href="/torrent/.*"' "$t1" -printf "https://www.1337xx.to/%(href)a\n" > "$t_link"
+hgrep 'a +href="/torrent/.*"' "$t1" -printf "$DOMAIN/%(href)a\n" > "$t_link"
 hgrep 'td +class="coll-2 seeds"' "$t1" -printf "%i\n" > "$t_se"
 hgrep 'td +class="coll-3 leeches"' "$t1" -printf "%i\n" > "$t_le"
 hgrep 'td +class="coll-date"' "$t1" -printf "%i\n" > "$t_time"
