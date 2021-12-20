@@ -1,5 +1,5 @@
 # t1337x
-A shell script to search for torrents on 1337x.
+A shell script for searching torrents on 1337x.
 
 ## Requirements
 
@@ -8,5 +8,5 @@ A shell script to search for torrents on 1337x.
 
 ## Instalation
     git clone 'https://github.com/TUVIMEN/t1337x'
-    cd tpb
+    cd t1337x
     sudo install -m 755 t1337x /usr/bin
