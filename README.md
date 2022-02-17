@@ -7,6 +7,4 @@ A shell script for searching torrents on 1337x.
  - xclip
 
 ## Instalation
-    git clone 'https://github.com/TUVIMEN/t1337x'
-    cd t1337x
-    sudo install -m 755 t1337x /usr/bin
+    install -m 755 t1337x /usr/bin
