@@ -91,13 +91,13 @@ else
 fi
 
 curl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
-hgrep 'a +href="/torrent/.*"' "$t1" -printf "%i\n" > "$t_name"
-hgrep 'a +href="/torrent/.*"' "$t1" -printf "$DOMAIN/%(href)a\n" > "$t_link"
-hgrep 'td +class="coll-2 seeds"' "$t1" -printf "%i\n" > "$t_se"
-hgrep 'td +class="coll-3 leeches"' "$t1" -printf "%i\n" > "$t_le"
-hgrep 'td +class="coll-date"' "$t1" -printf "%i\n" > "$t_time"
-hgrep 'td +class="coll-4 .*"' "$t1" -printf "%i\n" | grep -o '^[^<]*' > "$t_size"
-hgrep 'td +class="coll-5 .*"; a' "$t1" -printf "%i\n" > "$t_uploader"
+hgrep 'a +href="/torrent/.*" @p"%i\n"' "$t1" > "$t_name"
+hgrep 'a +href="/torrent/.*" @p"'$DOMAIN'/%(href)a\n"' "$t1" > "$t_link"
+hgrep 'td +class="coll-2 seeds" @p"%i\n"' "$t1" > "$t_se"
+hgrep 'td +class="coll-3 leeches" @p"%i\n"' "$t1" > "$t_le"
+hgrep 'td +class="coll-date" @p"%i\n"' "$t1" > "$t_time"
+hgrep 'td +class="coll-4 .*" @p"%i\n"' "$t1" | grep -o '^[^<]*' > "$t_size"
+hgrep 'td +class="coll-5 .*"; a @p"%i\n"' "$t1" > "$t_uploader"
 
 color_lines() {
     sed "s/^/\x1b[$1m/; s/$/\x1b[0m/" "$2" > "$3"
