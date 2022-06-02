@@ -117,4 +117,4 @@ fi
 paste -d "$DELIM" "$t_name" "$t_time" "$t_size" "$t_se" "$t_le" "$t_uploader" | nl
 printf 'num> '
 read -r NUMBER
-[ "$NUMBER" -gt 0 ] && curl -g -s "$(sed "${NUMBER}q;d" "$t_link")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | xclip -sel clip
+[ "$NUMBER" -gt 0 ] && curl -g -s "$(sed "${NUMBER}q;d" "$t_link")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | tr -d '\n' | xclip -sel clip
