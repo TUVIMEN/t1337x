@@ -6,5 +6,5 @@ A shell script for searching torrents on 1337x.
  - [hgrep](https://github.com/TUVIMEN/hgrep)
  - xclip
 
-## Instalation
+## Installation
     install -m 755 t1337x /usr/bin
