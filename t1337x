@@ -83,7 +83,7 @@ trap 'rm "$t1" "$t_name" "$t_link" "$t_se" "$t_le" "$t_time" "$t_size" "$t_uploa
 
 if [ -n "$SORT" ]
 then
-    PSORT="search-sort"
+    PSORT="sort-search"
     [ -z "$REVERSE" ] && RSORT="desc" || RSORT="asc"
 else
     RSORT=""
