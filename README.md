@@ -1,4 +1,5 @@
 # t1337x
+
 A shell script for searching torrents on 1337x.
 
 ![example](example.gif)
@@ -9,6 +10,7 @@ A shell script for searching torrents on 1337x.
  - xclip
 
 ## Installation
+
     install -m 755 t1337x /usr/bin
 
 ## Usage
@@ -25,7 +27,7 @@ Search for the smallest linux isos on second page
 
 Search different domain for linux isos and change delimiter to space
 
-    t1337x -d ' ' -D 'https://otherdomain.to' 'linux iso'
+    t1337x -D ' ' -d 'https://otherdomain.to' 'linux iso'
 
 Get some help
 
