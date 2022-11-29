@@ -23,6 +23,8 @@ C_TIME="36"
 C_NAME="39"
 COLOR=1
 
+alias ucurl='curl -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) QtWebEngine/5.15.2 Chrome/87.0.4280.144 Safari/537.36" -H "Accept-Encoding: gzip, deflate" --compressed'
+
 while [ $# -gt 0 ]
 do
   case "$1" in
@@ -90,7 +92,7 @@ else
     PSORT="search"
 fi
 
-curl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
+ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
 hgrep 'a +href="/torrent/.*" @p"%i\n"' "$t1" > "$t_name"
 hgrep 'a +href="/torrent/.*" @p"'$DOMAIN'/%(href)a\n"' "$t1" > "$t_link"
 hgrep 'td +class="coll-2 seeds" @p"%i\n"' "$t1" > "$t_se"
@@ -117,4 +119,4 @@ fi
 paste -d "$DELIM" "$t_name" "$t_time" "$t_size" "$t_se" "$t_le" "$t_uploader" | nl
 printf 'num> '
 read -r NUMBER
-[ "$NUMBER" -gt 0 ] && curl -g -s "$(sed "${NUMBER}q;d" "$t_link")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | tr -d '\n' | xclip -sel clip
+[ "$NUMBER" -gt 0 ] && ucurl -g -s "$(sed "${NUMBER}q;d" "$t_link")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | tr -d '\n' | xclip -sel clip
