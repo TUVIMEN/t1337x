@@ -2,13 +2,7 @@
 # by Dominik Stanisław Suchora <suchora.dominik7@gmail.com>
 # License: GNU GPLv3
 
-by_name=""
-by_time="time"
-by_size="size"
-by_se="seeders"
-by_le="leechers"
-
-SORT="$by_name"
+SORT='' #name
 PAGE=1
 SEARCH=""
 REVERSE=""
@@ -30,11 +24,11 @@ do
   case "$1" in
     -s|--sort)
       case "$2" in
-        name) SORT="$by_name";;
-        size) SORT="$by_size";;
-        time) SORT="$by_time";;
-        se) SORT="$by_se";;
-        le) SORT="$by_le";;
+        name) SORT='';;
+        size) SORT='size';;
+        time) SORT='time';;
+        se) SORT='seeers';;
+        le) SORT='leechers';;
       esac
       shift;;
     -h|--help)
@@ -66,22 +60,17 @@ do
         DELIM="$2"
         shift;;
     *)
-      SEARCH="$1"
+        if [ -z "$SEARCH" ]
+        then
+          SEARCH="$1"
+        else
+          SEARCH="$SEARCH $1"
+        fi;;
   esac
   shift
 done
 
 SEARCHP=$(echo "$SEARCH" | tr ' -+/_:;' '.')
-
-t1="$(mktemp)"
-t_time="$(mktemp)"
-t_size="$(mktemp)"
-t_se="$(mktemp)"
-t_le="$(mktemp)"
-t_name="$(mktemp)"
-t_link="$(mktemp)"
-t_uploader="$(mktemp)"
-trap 'rm "$t1" "$t_name" "$t_link" "$t_se" "$t_le" "$t_time" "$t_size" "$t_uploader"' EXIT
 
 if [ -n "$SORT" ]
 then
@@ -92,31 +81,48 @@ else
     PSORT="search"
 fi
 
-ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody' > "$t1"
-hgrep 'a +href="/torrent/.*" @p"%i\n"' "$t1" > "$t_name"
-hgrep 'a +href="/torrent/.*" @p"'$DOMAIN'/%(href)a\n"' "$t1" > "$t_link"
-hgrep 'td +class="coll-2 seeds" @p"%i\n"' "$t1" > "$t_se"
-hgrep 'td +class="coll-3 leeches" @p"%i\n"' "$t1" > "$t_le"
-hgrep 'td +class="coll-date" @p"%i\n"' "$t1" > "$t_time"
-hgrep 'td +class="coll-4 .*" @p"%i\n"' "$t1" | grep -o '^[^<]*' > "$t_size"
-hgrep 'td +class="coll-5 .*"; a @p"%i\n"' "$t1" > "$t_uploader"
+t1="$(ucurl -s "$DOMAIN/$PSORT/$SEARCHP/$SORT/$RSORT/$PAGE/" | hgrep 'tbody')"
+links="$(echo "$t1" | hgrep 'a +href="/torrent/.*" @p"'$DOMAIN'/%(href)a\n"')" #links
+{
+echo "$t1" | hgrep 'a +href="/torrent/.*" @p"%i\n"' #name
+echo "$t1" | hgrep 'td +class="coll-date" @p"%i\n"' #time
+echo "$t1" | hgrep 'td +class="coll-4 .*" @p"%i\n"' | grep -o '^[^<]*' #size
+echo "$t1" | hgrep 'td +class="coll-2 seeds" @p"%i\n"' #se
+echo "$t1" | hgrep 'td +class="coll-3 leeches" @p"%i\n"' #le
+echo "$t1" | hgrep 'td +class="coll-5 .*"; a @p"%i\n"' #uploader
+} | awk 'function print_fields(lines,fields,step) {
+        colors[0] = '"$C_NAME"'
+        colors[1] = '"$C_TIME"'
+        colors[2] = '"$C_SIZE"'
+        colors[3] = '"$C_SE"'
+        colors[4] = '"$C_LE"'
+        colors[5] = '"$C_AUTHOR"'
+        ORS = ""
+        for (i = 0; i < step; i++) {
+            for (j = 0; j < fields; j++) {
+                if (j != 0)
+                    print "'"$DELIM"'"
+                if ('"$COLOR"')
+                    print "\033["colors[j]"m"lines[(step*j)+i]"\033[0m"
+                else
+                    print lines[(step*j)+i]
+            }
+            printf "\n"
+        }
+    }
 
-color_lines() {
-    sed "s/^/\x1b[$1m/; s/$/\x1b[0m/" "$2" > "$3"
-    cp "$3" "$2"
-}
+    BEGIN { l=0; fields = 6 }
+    { lines[l++]=$0 }
+    END {
+        if (l >= fields)
+        if (l%fields == 0) {
+                step = l/fields
+                print_fields(lines,fields,step)
+        } else
+            print "length of some data fields does not match the others"
+    }' | nl
 
-if [ "$COLOR" -eq 1 ]
-then
-    color_lines "$C_SIZE" "$t_size" "$t1"
-    color_lines "$C_NAME" "$t_name" "$t1"
-    color_lines "$C_LE" "$t_le" "$t1"
-    color_lines "$C_SE" "$t_se" "$t1"
-    color_lines "$C_AUTHOR" "$t_uploader" "$t1"
-    color_lines "$C_TIME" "$t_time" "$t1"
-fi
-
-paste -d "$DELIM" "$t_name" "$t_time" "$t_size" "$t_se" "$t_le" "$t_uploader" | nl
+[ -z "$links" ] && exit 1
 printf 'num> '
 read -r NUMBER
-[ "$NUMBER" -gt 0 ] && ucurl -g -s "$(sed "${NUMBER}q;d" "$t_link")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | tr -d '\n' | xclip -sel clip
+[ "$NUMBER" -gt 0 ] && ucurl -g -s "$(echo "$links" | sed "${NUMBER}q;d")" | grep -oE -m 1 'magnet:\?[^"]+' | tee /dev/stderr | tr -d '\n' | xclip -sel clip
